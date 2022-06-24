@@ -1,35 +1,51 @@
 import React, { useState, useEffect } from "react";
-import { handleAddTask, handleDelete, handleUpdate } from "./components/tasks.js";
-import { getTasks, addTask, deleteTask, updateTask } from "./services/taskService.js";
-import { Paper, TextField, Checkbox, Button } from "@mui/material";
-
+import {
+  handleAddTask,
+  handleDelete,
+  handleUpdate,
+} from "./components/tasks.js";
+import { getTasks } from "./services/taskService.js";
+import { Paper, TextField, Button } from "@mui/material";
 import "./App.css";
+import { Container } from "@mui/system";
 
 function App() {
   const [tasks, setTasks] = useState([]);
   const [currentTask, setCurrentTask] = useState("");
+  const [updateStatus, setUpdateStatus] = useState({
+    show: false,
+    id: "",
+  });
 
   useEffect(() => {
     const fetchData = async () => {
-      console.log("Mounting fetch data start")
+      console.log(updateStatus, "Mounting fetch data start");
       const { data } = await getTasks();
       setTasks(data);
-      console.log(data, tasks, "Mounting")
     };
     fetchData();
-    console.log("Mount function ")
   }, []);
 
-const handleChange = (input) => {
-  setCurrentTask(input)
-};
+  const handleChange = (input) => {
+    setCurrentTask(input);
+  };
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-  console.log(currentTask, "HandleChnage Function")
- await handleAddTask(currentTask, setTasks, setCurrentTask, tasks)
-};
+    console.log(currentTask, "HandleChnage Function");
+    await handleAddTask(currentTask, setTasks, setCurrentTask, tasks);
+  };
+
+  const handleUpdateStatus = (id) => {
+    setUpdateStatus((prevState) => {
+      console.log(updateStatus, id, "Status");
+      return {
+        show: !prevState.show,
+        id: id,
+      };
+    });
+  };
 
   return (
     <div className="App flex">
@@ -37,7 +53,7 @@ const handleSubmit = async (e) => {
         <div className="heading">TO-DO</div>
         <form
           onSubmit={(e) => {
-            handleSubmit(e)
+            handleSubmit(e);
           }}
           className="flex"
           style={{ margin: "15px 0" }}
@@ -62,19 +78,59 @@ const handleSubmit = async (e) => {
         </form>
         <div>
           {tasks?.map((task) => (
-            <Paper key={task._id} className="flex task_container">
-              {/* <Checkbox
-                checked={task.completed}
-                onClick={() => handleUpdate(task._id)}
-                color="primary"
-              /> */}
-              <div className={task.completed ? "task line_through" : "task"}>
-                {task.task}
-              </div>
-              <Button onClick={() => handleDelete(task._id, tasks, setTasks)} color="secondary">
-                delete
-              </Button>
-            </Paper>
+            <Container key={task?._id}>
+              {/* {console.log(task?._id, "Inside Map")} */}
+              <Paper className="flex task_container">
+                <div className={task?.completed ? "task line_through" : "task"}>
+                  {task?.task}
+                </div>
+                <Button
+                  onClick={() => {
+                    handleUpdateStatus(task?._id);
+                  }}
+                  color="primary"
+                >
+                  Edit
+                </Button>
+                <Button
+                  onClick={() => handleDelete(task?._id, tasks, setTasks)}
+                  color="secondary"
+                >
+                  delete
+                </Button>
+              </Paper>
+
+              {updateStatus?.show && updateStatus?.id === task?._id && (
+                <Paper>
+                  <TextField
+                    variant="outlined"
+                    size="small"
+                    style={{ width: "60%" }}
+                    value={currentTask}
+                    required={true}
+                    onChange={(e) => handleChange(e.target.value)}
+                    placeholder="Update Todo"
+                  />
+
+                  <Button
+                    onClick={() => {
+                      handleUpdateStatus(task?._id);
+                    }}
+                    color="primary"
+                    variant="outlined"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={() => handleUpdate(task?._id, tasks, setTasks)}
+                    color="secondary"
+                    variant="outlined"
+                  >
+                    Update
+                  </Button>
+                </Paper>
+              )}
+            </Container>
           ))}
         </div>
       </Paper>
